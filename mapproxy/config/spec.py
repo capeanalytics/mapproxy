@@ -138,6 +138,16 @@ cache_types = {
         'directory': str(),
         'profile_name': str(),
      },
+    'hybrid': {
+        's3_bucket_name': str(),
+        's3_directory_layout': str(),
+        's3_directory': str(),
+        's3_profile_name': str(),
+        'file_directory_layout': str(),
+        'file_use_grid_names': bool(),
+        'file_directory': str(),
+        'file_tile_lock_dir': str(),
+     },
     'riak': {
         'nodes': [riak_node],
         'protocol': one_of('pbc', 'http', 'https'),

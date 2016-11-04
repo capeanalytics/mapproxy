@@ -73,6 +73,9 @@ class S3Cache(TileCacheBase):
         self._tile_location, _ = path.location_funcs(layout=directory_layout)
 
     def tile_key(self, tile):
+        ##Clear Tile location for now, since it's cached otherwise and screws up
+        ##cascading caching
+        tile.location = None
         return self._tile_location(tile, self.base_path, self.file_ext).lstrip('/')
 
     def conn(self):
@@ -123,7 +126,7 @@ class S3Cache(TileCacheBase):
             r  = self.conn().get_object(Bucket=self.bucket_name, Key=key)
             self._set_metadata(r, tile)
             tile.source = ImageSource(r['Body'])
-        except botocore.exceptions.ClientError as e:
+        except (TypeError, botocore.exceptions.ClientError) as e:
             error = e.response.get('Errors', e.response)['Error'] # moto get_object can return Error wrapped in Errors...
             if error['Code'] in ('404', 'NoSuchKey'):
                 return False

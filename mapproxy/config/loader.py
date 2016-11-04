@@ -1113,6 +1113,32 @@ class CacheConfiguration(ConfigurationBase):
             profile_name=profile_name,
         )
 
+    def _hybrid_cache(self, grid_conf, file_ext):
+        from mapproxy.cache.hybrid import HybridCache
+
+        s3_bucket_name = self.context.globals.get_value('cache.s3_bucket_name', self.conf,
+            global_key='cache.s3.bucket_name')
+
+        if not s3_bucket_name:
+            raise ConfigurationError("no bucket_name configured for s3 cache %s" % self.conf['name'])
+
+        s3_profile_name = self.context.globals.get_value('cache.profile_name', self.conf,
+            global_key='cache.s3.s3_profile_name')
+
+        s3_directory_layout = self.conf['cache'].get('s3_directory_layout', 'tms')
+
+        s3_base_path = self.conf['cache'].get('s3_directory', None)
+        if s3_base_path is None:
+            s3_base_path = os.path.join(self.conf['name'], grid_conf.tile_grid().name)
+
+        return HybridCache(
+            s3_base_path=s3_base_path,
+            file_ext=file_ext,
+            s3_directory_layout=s3_directory_layout,
+            s3_bucket_name=s3_bucket_name,
+            s3_profile_name=s3_profile_name,
+        )
+
     def _sqlite_cache(self, grid_conf, file_ext):
         from mapproxy.cache.mbtiles import MBTilesLevelCache
 

@@ -47,6 +47,9 @@ class FileCache(TileCacheBase):
             self.level_location = None # disable level based clean-ups
 
     def tile_location(self, tile, create_dir=False):
+        ##Clear Tile location for now, since it's cached otherwise and screws up
+        ##cascading caching
+        tile.location = None
         return self._tile_location(tile, self.cache_dir, self.file_ext, create_dir=create_dir)
 
     def level_location(self, level):
