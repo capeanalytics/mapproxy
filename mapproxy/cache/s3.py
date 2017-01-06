@@ -24,6 +24,7 @@ from mapproxy.cache import path
 from mapproxy.cache.base import tile_buffer, TileCacheBase
 from mapproxy.util import async
 from mapproxy.util.py import reraise_exception
+import multiprocessing
 
 try:
     import boto3
@@ -69,7 +70,7 @@ class S3Cache(TileCacheBase):
 
         self.base_path = base_path
         self.file_ext = file_ext
-
+        self._tile_write_pool = multiprocessing.Pool(processes=4)
         self._tile_location, _ = path.location_funcs(layout=directory_layout)
 
     def tile_key(self, tile):
@@ -150,12 +151,16 @@ class S3Cache(TileCacheBase):
         extra_args = {}
         if self.file_ext in ('jpeg', 'png'):
             extra_args['ContentType'] = 'image/' + self.file_ext
-        with tile_buffer(tile) as buf:
-            self.conn().upload_fileobj(
-                NopCloser(buf), # upload_fileobj closes buf, wrap in NopCloser
-                self.bucket_name,
-                key,
-                ExtraArgs=extra_args)
+
+        self._tile_write_pool.apply_async(_store_tile_async, (self.conn(), tile_buffer(tile), self.bucket_name, key, extra_args))
+
+    
+def _store_tile_async(self, conn, tile_buf, bucket_name, key, extra_args):
+    conn.upload_fileobj(
+        NopCloser(tile_buf), # upload_fileobj closes buf, wrap in NopCloser
+       bucket_name,
+        key,
+        ExtraArgs=extra_args)
 
 class NopCloser(object):
     def __init__(self, wrapped):
