@@ -97,6 +97,7 @@ class S3Cache(TileCacheBase):
 
     def is_cached(self, tile):
         if tile.is_missing():
+            return False
             key = self.tile_key(tile)
             try:
                 r = self.conn().head_object(Bucket=self.bucket_name, Key=key)
